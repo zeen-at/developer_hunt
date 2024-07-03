@@ -1,12 +1,19 @@
-import { View, Text, ScrollView, Image } from 'react-native'
+import { View, Text, ScrollView, Image, Alert } from 'react-native'
 import { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { images } from '../../constants'
 import CustomInput from '../../components/CustomInput'
 import CustomButton from '../../components/CustomButton'
-import { Link } from 'expo-router'
+import { Link, router } from 'expo-router'
+import { createUser } from '../../lib/appwrite.js'
+import { useGlobalContext } from '../context/GlobalProvider'
 
 const SignUp = () => {
+
+
+    const {setUser, setIsLoggedIn} = useGlobalContext();
+
+
     const [formDetails, setFormDetails] = useState({
         username: "",
         email: "",
@@ -14,8 +21,25 @@ const SignUp = () => {
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const submit = () => {
-        setIsSubmitting(true)
+    const submit = async () => {
+        if(!formDetails.email || !formDetails.password || !formDetails.username){
+            Alert.alert('Error', "Fields cannot be empty")
+        }
+        setIsSubmitting(true);
+
+        try {
+           const result = await createUser(formDetails.email, formDetails.password, formDetails.username);
+           
+           setUser(result);
+           setIsLoggedIn(true);
+
+           router.replace('/home')
+
+        } catch (error) {
+            Alert.alert('Error', error.message)
+        }finally{
+            setIsSubmitting(false)
+        }
     }
     
 
@@ -28,13 +52,13 @@ const SignUp = () => {
                 <CustomInput
                 title="Username"
                 value={formDetails.username}
-                handleChange={(e) => setFormDetails({...formDetails, username: e})}
+                handleChangeText={(e) => setFormDetails({...formDetails, username: e})}
                 otherStyles="mt-10"
                 />
                 <CustomInput
                 title="Email"
                 value={formDetails.email}
-                handleChange={(e) => setFormDetails({...formDetails, email: e})}
+                handleChangeText={(e) => setFormDetails({...formDetails, email: e})}
                 otherStyles="mt-7"
                 keyboardType="email-address"
                 />
